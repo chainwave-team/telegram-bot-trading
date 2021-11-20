@@ -15,6 +15,7 @@
     "date-fns": "^2.26.0",
     "dotenv": "^10.0.0",
     "technicalindicators": "^3.1.0",
+    "telegraf": "^4.4.2",
     "yahoo-finance": "^0.3.7"
   }
 }
