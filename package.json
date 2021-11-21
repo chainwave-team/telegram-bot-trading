@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -14,6 +15,8 @@
     "await-to-js": "^3.0.0",
     "date-fns": "^2.26.0",
     "dotenv": "^10.0.0",
+    "node-cron": "^3.0.0",
+    "nodemon": "^2.0.15",
     "technicalindicators": "^3.1.0",
     "telegraf": "^4.4.2",
     "yahoo-finance": "^0.3.7"

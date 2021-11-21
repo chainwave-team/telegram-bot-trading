@@ -1,10 +1,11 @@
-# RSI BOT
+# RSI Notifier bot
 
-Fetch Stock/Currency from Yahoo Finance
-Calculate the RSI (daily, 14).
-Send a Telegram notification when it is out of the range 30-70.
+> Wanna fork? Feel free and chat with the Telegram bot @BotFather to have your TOKEN.
 
-Repeat this process daily using CRON.
+## How it works
+- Fetch Stock/Currency from Yahoo Finance (find symbols there).
+- Calculate the RSI (daily, 14).
+- Send a daily Telegram notification using CRON.
 
 # Installation
 

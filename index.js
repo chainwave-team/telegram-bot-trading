@@ -5,25 +5,31 @@ const yf = require('yahoo-finance')
 const indicators = require('technicalindicators');
 const dateFns = require('date-fns')
 const { Telegraf } = require('telegraf')
+const cron = require('node-cron')
 
 const symbols = [
     ["BTC-USD", "Bitcoin"],
     ["ETH-USD", "Ethereum"],
+    ["BNB-USD", "BinanceCoin"],
+    ["SOL1-USD", "Solana"],
+    ["ADA-USD", "Cardanno"],
+    ["DOT1-USD", "Polkadot"],
+    ["AVAX-USD", "Avalanche"],
     ["AAPL", "Apple"],
     ["TSLA", "Tesla"],
+    // ["AMEW.SG", "Msci World"], // my ETF seems not work,
+    ["EUNL.DE", "Msci World"], // use this one instead...
+    ["PAEEM.PA", "Msci Emerging Markets"],
+    ["C50.PA", "Msci Euro Stoxx 50"],
 ]
-
-function formatDate(date) {
-    return dateFns.format(date, 'yyyy-MM-dd')
-}
 
 // Fetch prices on Yahoo and calculate the RSI
 async function getRsi(symbol) {
     // Fetch prices using Yahoo Finance
     const [err, quotes] = await to(yf.historical({
         symbol,
-        from: formatDate(dateFns.subDays(new Date(), 100)),
-        to: formatDate(new Date()),
+        from: dateFns.format(dateFns.subDays(new Date(), 100), 'yyyy-MM-dd'),
+        to: dateFns.format(new Date(), 'yyyy-MM-dd'),
         period: 'd'  // (daily)
     }))
 
@@ -44,24 +50,36 @@ async function getRsi(symbol) {
 function getEmoji(value) {
     let emoji
     if (value > 70) {
-        emoji = "🔴"
+        emoji = "❤️"
     } else if (value > 50) {
-        emoji = "🟠"
+        emoji = "🧡"
     } else if (value > 30) {
-        emoji = "🟡"
+        emoji = "💛"
     } else {
-        emoji = "🟢"
+        emoji = "💚"
     }
     return emoji
 }
 
 async function buildAllRsiMessage() {
-    let msg = ''
-    let errors = []
+    const result = []
+
+    // Get RSIs
     for (const [symbol, name] of symbols) {
         const rsi = await getRsi(symbol)
+        result.push({ rsi, symbol, name })
+    }
+
+    // Sort
+    const sorted = result.sort((a, b) => b.rsi - a.rsi)
+
+    // Concat (write)
+    let msg = 'RSI per coins:\n---\n'
+    let errors = []
+    for (const { rsi, name, symbol } of sorted) {
+        // const prettySymbol = symbol.replace(".", " . ").replace("-USD", "")
         if (!!rsi) {
-            msg += `${getEmoji(rsi)} ${name} (${symbol}): RSI is ${rsi}\n`
+            msg += `${getEmoji(rsi)} ${name}: ${Number(rsi).toFixed()}\n`
         } else {
             errors.push(symbol)
         }
@@ -69,7 +87,7 @@ async function buildAllRsiMessage() {
 
     // Push errors in the footer of the message.
     if (errors.length) {
-        msg += "\n---\nErrors:\n"
+        msg += "\nErrors:\n---\n"
         for (const error of errors) {
             msg += `${error}\n`
         }
@@ -78,12 +96,16 @@ async function buildAllRsiMessage() {
     return msg
 }
 
-// Ask token to the BotFather.
+// Ask token to the @BotFather.
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN)
 
-bot.on('text', async (ctx) => {
-    const message = await buildAllRsiMessage()
-    ctx.reply(message)
+// On bot starts, launch the CRON job.
+bot.start(ctx => {
+    // “At 08:00 on every day-of-month from 1 through 31.”
+    cron.schedule("0 8 1-31 * *", async () => {
+        const message = await buildAllRsiMessage()
+        ctx.reply(message)
+    });
 })
 
 bot.launch()
