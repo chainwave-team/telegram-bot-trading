@@ -108,6 +108,11 @@ bot.start(ctx => {
     });
 })
 
+// Just to check if it works ¯\(ツ)/¯
+bot.on('text', async ctx => {
+    ctx.reply("Hey 👋\nThe bot in running, you will receive update each morning at 8am, Europe timezone.")
+})
+
 bot.launch()
 
 // Enable graceful stop
