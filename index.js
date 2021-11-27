@@ -23,6 +23,18 @@ const symbols = [
     ["C50.PA", "Msci Euro Stoxx 50"],
 ]
 
+// Fetch price on Yahoo
+async function getPrice(symbol) {
+    // Fetch prices using Yahoo Finance
+    const [err, price] = await to(yf.quote({ symbol }))
+
+    if (err) {
+        throw new Error(`Error while fetching ${symbol} price`)
+    }
+
+    return price
+}
+
 // Fetch prices on Yahoo and calculate the RSI
 async function getRsi(symbol) {
     // Fetch prices using Yahoo Finance
@@ -50,13 +62,13 @@ async function getRsi(symbol) {
 function getEmoji(value) {
     let emoji
     if (value > 70) {
-        emoji = "❤️"
+        emoji = "🔴"
     } else if (value > 50) {
-        emoji = "🧡"
+        emoji = "🟠"
     } else if (value > 30) {
-        emoji = "💛"
+        emoji = "🟡"
     } else {
-        emoji = "💚"
+        emoji = "🟢"
     }
     return emoji
 }
@@ -108,9 +120,30 @@ bot.start(ctx => {
     });
 })
 
+bot.command("prices", async ctx => {
+    let message = `Prices per coins:\n---\n`
+
+    for await (const [symbol, name] of symbols) {
+        const { price } = await getPrice(symbol)
+        if (!!price?.regularMarketPrice) {
+            const direction = price.regularMarketChange > 0 ? "🟢" : "🔴"
+            const marketPrice = Number(price.regularMarketPrice).toFixed(2)
+            message += `${direction} ${name}: ${marketPrice} (${price.currency})\n`
+        }
+    }
+
+    ctx.reply(message)
+})
+
+bot.command("rsi", async ctx => {
+    const message = await buildAllRsiMessage()
+    ctx.reply(message)
+})
+
 // Just to check if it works ¯\(ツ)/¯
 bot.on('text', async ctx => {
-    ctx.reply("Hey 👋\nThe bot in running, you will receive update each morning at 8am, Europe timezone.")
+    const message = "Hey 👋\nWhat do you want:\n/prices\n/rsi"
+    ctx.reply(message)
 })
 
 bot.launch()
@@ -118,3 +151,4 @@ bot.launch()
 // Enable graceful stop
 process.once('SIGINT', () => bot.stop('SIGINT'))
 process.once('SIGTERM', () => bot.stop('SIGTERM'))
+
